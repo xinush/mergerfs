@@ -31,6 +31,9 @@ GZIP      =     $(shell which gzip)
 RPMBUILD  =     $(shell which rpmbuild)
 GIT2DEBCL =     ./tools/git2debcl
 CPPFIND   =     ./tools/cppfind
+UNAME_S   =     $(shell uname -s)
+OS_DIST   =     $(shell grep -m 1 "^ID=" /etc/os-release 2>/dev/null | sed -e 's/[^=]*=//' | sed -e 's/"//g')
+OS_VERID  =     $(shell grep -m 1 "^VERSION_ID=" /etc/os-release 2>/dev/null | sed -e 's/[^=]*=//' | sed -e 's/"//g')
 
 ifeq ($(PKGCONFIG),"")
 $(error "pkg-config not installed")
@@ -50,6 +53,11 @@ endif
 
 ifeq ($(FUSE_AVAILABLE),0)
 $(error "FUSE development package doesn't appear available")
+endif
+
+ifeq ($(UNAME_S),Darwin)
+    CPPFIND = ./tools/cppfind_osx "$(CPP) -DFUSE_USE_VERSION=26"
+	XATTR_AVAILABLE  = $(shell test ! -e /usr/include/sys/xattr.h; echo $$?)
 endif
 
 FLAG_NOPATH = $(shell $(CPPFIND) "flag_nopath")
@@ -80,6 +88,15 @@ CFLAGS      = -g -Wall \
               -DWRITE_BUF=$(WRITE_BUF) \
 	      -DUGID_USE_RWLOCK=$(UGID_USE_RWLOCK)
 LDFLAGS       = $(shell $(PKGCONFIG) fuse --libs)
+
+ifeq ($(UNAME_S),Darwin)
+	CFLAGS   += -Isrc/opt/osx 
+	CFLAGS   += -include "compat_osx.h" 
+endif
+
+ifeq ($(OS_DIST)_$(OS_VERID),raspbian_7)
+    LDFLAGS += -lpthread
+endif
 
 PREFIX        = /usr/local
 EXEC_PREFIX   = $(PREFIX)
@@ -126,6 +143,7 @@ src/version.hpp:
 
 obj/obj-stamp:
 	$(MKDIR) -p obj
+	$(MKDIR) -p obj/opt
 	$(TOUCH) $@
 
 obj/%.o: src/%.cpp
@@ -135,6 +153,7 @@ clean: rpm-clean
 	$(RM) -rf obj
 	$(RM) -f src/version.hpp
 	$(RM) -f "$(TARGET)" mount.mergerfs
+	$(RM) -rf "$(TARGET)".dSYM
 	$(FIND) . -name "*~" -delete
 
 distclean: clean
