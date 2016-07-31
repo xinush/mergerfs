@@ -1,0 +1,9 @@
+#!/bin/sh
+
+CPP=$1;  
+
+[ -z "$CPP" ] && CPP="cpp -DFUSE_USE_VERSION=26"; CPP=$(echo "$CPP" | sed -e 's/g\{0,1\}cc *-E/cpp/')
+FUSE_CFLAGS=$(pkg-config --cflags fuse)
+echo "#include <fuse.h>" | ${CPP} ${FUSE_CFLAGS} 2>/dev/null | grep -q "${2}"
+
+[ "$?" != "0" ]; echo $?

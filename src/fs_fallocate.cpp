@@ -29,7 +29,7 @@ namespace fs
   {
     int rv;
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
     rv = ::fallocate(fd,mode,offset,len);
 #elif _XOPEN_SOURCE >= 600 || _POSIX_C_SOURCE >= 200112L
     rv = (mode ?
