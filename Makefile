@@ -32,8 +32,6 @@ RPMBUILD  =     $(shell which rpmbuild)
 GIT2DEBCL =     ./tools/git2debcl
 CPPFIND   =     ./tools/cppfind
 UNAME_S   =     $(shell uname -s)
-OS_DIST   =     $(shell grep -m 1 "^ID=" /etc/os-release 2>/dev/null | sed -e 's/[^=]*=//' | sed -e 's/"//g')
-OS_VERID  =     $(shell grep -m 1 "^VERSION_ID=" /etc/os-release 2>/dev/null | sed -e 's/[^=]*=//' | sed -e 's/"//g')
 
 ifeq ($(PKGCONFIG),"")
 $(error "pkg-config not installed")
@@ -92,10 +90,6 @@ LDFLAGS       = $(shell $(PKGCONFIG) fuse --libs)
 ifeq ($(UNAME_S),Darwin)
 	CFLAGS   += -Isrc/opt/osx 
 	CFLAGS   += -include "compat_osx.h" 
-endif
-
-ifeq ($(OS_DIST)_$(OS_VERID),raspbian_7)
-    LDFLAGS += -lpthread
 endif
 
 PREFIX        = /usr/local
